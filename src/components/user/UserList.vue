@@ -1,8 +1,8 @@
 <template>
-	<div class="userList">
-		<div class="userList__controls">
+	<div class="user-list">
+		<div class="user-list__controls">
 			<button 
-				class="userList__createButton"
+				class="user-list__controls__create-button"
 				@click="openUserForm(null)">
 					Создать юзера
 			</button>
@@ -15,7 +15,7 @@
 			</label>
 		</div>
     
-		<div class="userList__wrapper">
+		<div class="user-list__wrapper">
 			<p v-if="users.length === 0">
 				Список юзеров пуст
 			</p>
@@ -23,9 +23,9 @@
 			v-else
 			v-for="user in users" 
 			:key="user.id" 
-			class="userListItem">
+			class="user-list__item">
 				<span>{{ formatedName(user) }}</span>
-				<div class="userListItem__controls">
+				<div class="user-list__item__controls">
 					<button 
 					title="Редактировать"
 					@click="editUser(user)">
@@ -39,7 +39,7 @@
 				</div> 
 			</div>
 		</div>
-		<UserForm 
+		<user-form 
 		v-if="isUserFormVisible"
 		:editingUser="editingUser" 
 		:isVisible="isUserFormVisible" 
@@ -49,24 +49,25 @@
   </template>
   
   <script lang="ts">
-  import { computed, defineComponent, inject, ref } from 'vue';
+  import { defineComponent, inject, Ref, ref } from 'vue';
   import UserForm from '@/components/user/UserForm.vue';
-  import { User, useUserStore } from '@/stores/user';
+  import { User, UserList, ToggleFullNameVisibility, DeleteUserFunction } from '@/types/store/user'
   
   export default defineComponent({
     components: {
       UserForm,
     },
     setup() {
-      const userStore = useUserStore();
-      const users = inject('users') as User[]
-      const isFullNameVisible = computed(() => userStore.getIsFullNameVisible) 
+      const users = inject('users') as UserList
+      const isFullNameVisible = inject('isFullNameVisible') as Ref<boolean>
+			const toggleFullName = inject('toggleFullNameVisibility') as ToggleFullNameVisibility
+			const removeUser = inject('deleteUser') as DeleteUserFunction
   
       const editingUser = ref(null as User | null);
       const isUserFormVisible = ref(false);
   
       const toggleFullNameVisibility = () => {
-				userStore.toggleFullNameVisibility();
+				toggleFullName();
 			};
 
 			const formatedName = (user: User) => `${user.firstName} ${isFullNameVisible.value ? user.lastName : ''}`
@@ -77,7 +78,7 @@
       };
   
       const deleteUser = (userId: number) => {
-        userStore.deleteUser(userId);
+        removeUser(userId);
       };
   
       const openUserForm = (user: User | null) => {
@@ -101,7 +102,7 @@
   </script>
 
 	<style lang="scss" scoped>
-	.userList{
+	.user-list{
 		width: 50%;
 		&__wrapper{
 			display: flex;
@@ -110,22 +111,21 @@
 		}
 		&__controls{
 			margin-bottom: 20px;
+			&__create-button{
+				width: fit-content;
+				margin-right: 20px;
+			}
 		}
-		&__createButton{
-			width: fit-content;
-			margin-right: 20px;
-		}
-		
-	}
-	.userListItem{
-		border: 1px solid green;
-		padding: 10px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		&__controls{
+		&__item{
+			border: 1px solid green;
+			padding: 10px;
 			display: flex;
-			gap: 5px;
+			align-items: center;
+			justify-content: space-between;
+			&__controls{
+				display: flex;
+				gap: 5px;
+			}
 		}
 	}
 	</style>

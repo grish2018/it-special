@@ -1,11 +1,10 @@
 <template>
-    <VModal 
-    class="modal" 
+    <v-modal 
     :isVisible="isVisible"
     :title="`${editingUser ? 'Редактирование' : 'Создание'} юзера`"
     @close="closeModal">
 			<form 
-			class="userForm"
+			class="user-form"
 			@submit.prevent="saveUser" >
 				<label>
 				Имя:
@@ -19,14 +18,13 @@
 				Аватарка:
 				<input type="file" accept="image/*" @change="handleAvatarChange" />
 				</label>
-        <div class="userForm__avatar-wrapper" v-if="user.avatar" >
+        <div class="user-form__avatar" v-if="user.avatar" >
           <div 
-          class="userForm__avatar-delete"
+          class="user-form__avatar__delete"
           @click="removeAvatar">
 						<font-awesome-icon icon="fa-regular fa-xmark-circle" />
 					</div>
           <img 
-          class="userForm__avatar"
           :src="user.avatar" 
           alt="User Avatar" />
         </div>
@@ -47,30 +45,30 @@
 				<button type="submit">{{ editingUser ? 'Сохранить' : 'Создать' }}</button>
 				<button @click="deleteUser" v-if="isEditing">Удалить</button>
 			</form>
-    </VModal>
+    </v-modal>
   </template>
   
   <script lang="ts">
   import VModal from '@/components/general/VModal.vue'
-  import { defineComponent, ref, computed } from 'vue';
-  import { User, useUserStore } from '@/stores/user';
-  
+  import { defineComponent, ref, computed, inject, Ref } from 'vue';
+  import { User, UserList, DeleteUserFunction } from '@/types/store/user'
+
   export default defineComponent({
     props: {
       editingUser: {
         type: Object as () => User | null,
         default: null,
-    },
+      },
       isVisible: Boolean,
     },
     components: {
-        VModal
+      VModal
     },
     emits:['close'],
 
     setup(props, { emit }) {
-      const userStore = useUserStore();
-      const users = userStore.users;
+      const users = inject<Ref<UserList>>('users');
+      const removeUser = inject('deleteUser') as DeleteUserFunction;
       
       const isEditing = computed(() => Boolean(props.editingUser));
       const user = ref({
@@ -103,27 +101,27 @@
       }
   
       const saveUser = () => {
-      if (props.editingUser !== null) {
-        const index = users.findIndex(u => u.id === props?.editingUser?.id);
-        if (index !== -1) {
-          users[index] = {
-            ...props.editingUser,
+        if (props.editingUser !== null && users) {
+          const index = users.value.findIndex(u => u.id === props.editingUser?.id);
+          if (index !== -1) {
+            users.value[index] = {
+              ...props.editingUser,
+              ...user.value,
+            };
+          }
+        } else if (users) {
+          const newUser: User = {
+            id: users.value.length + 1,
             ...user.value,
           };
+          users.value.push(newUser);
         }
-      } else {
-        const newUser: User = {
-          id: users.length + 1,
-          ...user.value,
-        };
-        users.push(newUser);
-      }
-      closeModal();
-    };
+        closeModal();
+      };
   
     const deleteUser = () => {
       if (props.editingUser !== null) {
-        userStore.deleteUser(props.editingUser.id);
+        removeUser(props.editingUser.id);
       }
       closeModal();
     };
@@ -147,25 +145,25 @@
   </script>
 
 <style scoped lang="scss">
-.userForm{
+.user-form{
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
   &__avatar{
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  &__avatar-delete{
-    position: absolute;
-    border-radius: 50%;
-    cursor: pointer;
-    right: 0;
-  }
-  &__avatar-wrapper{
     position: relative;
     width: fit-content;
+    &__delete{
+      position: absolute;
+      border-radius: 50%;
+      cursor: pointer;
+      right: 0;
+    }
+    & img{
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
   }
 }
 </style>

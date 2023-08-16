@@ -3,24 +3,24 @@
     <h1>
       Task1
     </h1>
-    <UserList />
+    <user-list />
 
     <h1>
       Task2
     </h1>
-    <VTextarea
+    <v-textarea
     id="signinName"
-    label="test"
-    readonly
+    label="Cool label"
     v-model:value="appCode"/>    
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, provide, ref } from 'vue';
+import { defineComponent, ref } from 'vue';
 import UserList from '@/components/user/UserList.vue';
 import VTextarea from '@/components/general/ui/VTextarea.vue';
-import { useUserStore } from '@/stores/user';
+import { useUserComposable } from "@/store/user/useUserComposable";
+
 
 export default defineComponent({
   name: 'App',
@@ -29,11 +29,9 @@ export default defineComponent({
     VTextarea
   },
   setup() {
-      const userStore = useUserStore();
-      const users = computed(() => userStore.users); 
+      useUserComposable();
       const appCode = ref('')
-      provide('users', users)
-
+     
       return {
         appCode
       }
